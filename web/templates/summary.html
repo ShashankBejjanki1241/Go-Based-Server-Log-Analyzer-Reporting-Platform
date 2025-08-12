@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - Summary Report</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 1em;
+            opacity: 0.9;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .summary-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .summary-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .section {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+            font-size: 1.3em;
+        }
+
+        .chart-container {
+            height: 300px;
+            margin: 15px 0;
+        }
+
+        .mini-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        .mini-table th, .mini-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .mini-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .mini-table tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 15px;
+            background-color: #e9ecef;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 3px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 15px;
+            color: #666;
+            font-size: 0.8em;
+        }
+
+        @media (max-width: 768px) {
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{.Title}} - Summary</h1>
+            <p>Generated on {{.GeneratedAt.Format "January 2, 2006 at 3:04 PM"}}</p>
+            {{if .TimeRange}}<p>Time Range: {{.TimeRange}}</p>{{end}}
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-number">{{.Summary.TotalRequests}}</div>
+                <div class="summary-label">Total Requests</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-number">{{.Summary.UniqueIPs}}</div>
+                <div class="summary-label">Unique IPs</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-number">{{printf "%.2f" .Summary.AvgResponseTime}}</div>
+                <div class="summary-label">Avg Response (ms)</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-number">{{printf "%.1f" .Summary.ErrorRate}}%</div>
+                <div class="summary-label">Error Rate</div>
+            </div>
+        </div>
+
+        <!-- Top Paths Summary -->
+        <div class="section">
+            <h2>Top Requested Paths</h2>
+            <table class="mini-table">
+                <thead>
+                    <tr>
+                        <th>Path</th>
+                        <th>Count</th>
+                        <th>%</th>
+                        <th>Distribution</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Summary.TopPaths}}
+                    <tr>
+                        <td title="{{.Path}}">{{if gt (len .Path) 40}}{{slice .Path 0 40}}...{{else}}{{.Path}}{{end}}</td>
+                        <td>{{.Count}}</td>
+                        <td>{{printf "%.1f" .Percentage}}%</td>
+                        <td style="width: 100px;">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: {{.Percentage}}%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Top IPs Summary -->
+        <div class="section">
+            <h2>Top Source IP Addresses</h2>
+            <table class="mini-table">
+                <thead>
+                    <tr>
+                        <th>IP Address</th>
+                        <th>Count</th>
+                        <th>%</th>
+                        <th>Distribution</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Summary.TopIPs}}
+                    <tr>
+                        <td>{{.IP}}</td>
+                        <td>{{.Count}}</td>
+                        <td>{{printf "%.1f" .Percentage}}%</td>
+                        <td style="width: 100px;">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: {{.Percentage}}%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Status Code Chart -->
+        <div class="section">
+            <h2>HTTP Status Code Distribution</h2>
+            <div class="chart-container">
+                <canvas id="statusCodeChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Hourly Traffic Chart -->
+        <div class="section">
+            <h2>Hourly Traffic Pattern</h2>
+            <div class="chart-container">
+                <canvas id="hourlyTrafficChart"></canvas>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Summary report generated by Go-Based Server Log Analyzer & Reporting Platform</p>
+        </div>
+    </div>
+
+    <script>
+        // Status Code Chart
+        const statusCtx = document.getElementById('statusCodeChart').getContext('2d');
+        const statusData = {
+            labels: {{range $key, $value := .Summary.StatusCodeBreakdown}}'{{$key}}',{{end}},
+            datasets: [{
+                label: 'Request Count',
+                data: {{range $key, $value := .Summary.StatusCodeBreakdown}}{{$value}},{{end}},
+                backgroundColor: [
+                    '#d4edda', '#d1ecf1', '#fff3cd', '#f8d7da', '#e2e3e5'
+                ],
+                borderColor: [
+                    '#155724', '#0c5460', '#856404', '#721c24', '#6c757d'
+                ],
+                borderWidth: 1
+            }]
+        };
+        
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: statusData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            font: {
+                                size: 12
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Hourly Traffic Chart
+        const hourlyCtx = document.getElementById('hourlyTrafficChart').getContext('2d');
+        const hourlyData = {
+            labels: {{range .Summary.HourlyTraffic}}'{{.Hour}}:00',{{end}},
+            datasets: [{
+                label: 'Requests per Hour',
+                data: {{range .Summary.HourlyTraffic}}{{$value}},{{end}},
+                backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                borderColor: 'rgba(102, 126, 234, 1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        };
+        
+        new Chart(hourlyCtx, {
+            type: 'line',
+            data: hourlyData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
