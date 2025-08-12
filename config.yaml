@@ -6,10 +6,10 @@ server:
 
 database:
   type: "mysql"  # or "postgres"
-  host: "localhost"
+  host: "mysql"  # Use container name for Docker networking
   port: 3306
-  username: "root"
-  password: "password"
+  username: "loguser"  # Match docker-compose credentials
+  password: "logpass"  # Match docker-compose credentials
   database: "log_analyzer"
   ssl_mode: "disable"
 
