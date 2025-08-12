@@ -379,41 +379,41 @@ func (s *Server) getLogsHandler(w http.ResponseWriter, r *http.Request) {
 	// Build query
 	query := "SELECT * FROM log_entries WHERE 1=1"
 	args := []interface{}{}
-	argCount := 1
+	argCount := 0
 
 	if logType != "" {
-		query += fmt.Sprintf(" AND log_type = $%d", argCount)
+		query += " AND log_type = ?"
 		args = append(args, logType)
 		argCount++
 	}
 
 	if statusCodeStr != "" {
 		if statusCode, err := strconv.Atoi(statusCodeStr); err == nil {
-			query += fmt.Sprintf(" AND status_code = $%d", argCount)
+			query += " AND status_code = ?"
 			args = append(args, statusCode)
 			argCount++
 		}
 	}
 
 	if sourceIP != "" {
-		query += fmt.Sprintf(" AND source_ip = $%d", argCount)
+		query += " AND source_ip = ?"
 		args = append(args, sourceIP)
 		argCount++
 	}
 
 	if path != "" {
-		query += fmt.Sprintf(" AND path LIKE $%d", argCount)
+		query += " AND path LIKE ?"
 		args = append(args, "%"+path+"%")
 		argCount++
 	}
 
 	if method != "" {
-		query += fmt.Sprintf(" AND method = $%d", argCount)
+		query += " AND method = ?"
 		args = append(args, method)
 		argCount++
 	}
 
-	query += " ORDER BY timestamp DESC LIMIT $" + strconv.Itoa(argCount) + " OFFSET $" + strconv.Itoa(argCount+1)
+	query += " ORDER BY timestamp DESC LIMIT ? OFFSET ?"
 	args = append(args, limit, offset)
 
 	// Execute query
