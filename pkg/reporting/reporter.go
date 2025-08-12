@@ -4,7 +4,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"html/template"
-	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -122,9 +121,9 @@ func (r *Reporter) GenerateCSVReport(data *ReportData, reportName string) (strin
 
 	// Write header
 	header := []string{
-		"Timestamp", "Log Type", "Source IP", "Method", "Path", 
-		"Status Code", "Response Size", "User Agent", "Referer", 
-		"Processing Time", "Raw Log"
+		"Timestamp", "Log Type", "Source IP", "Method", "Path",
+		"Status Code", "Response Size", "User Agent", "Referer",
+		"Processing Time", "Raw Log",
 	}
 	if err := writer.Write(header); err != nil {
 		return "", fmt.Errorf("failed to write CSV header: %w", err)
@@ -226,7 +225,7 @@ func (r *Reporter) prepareSummary(data *ReportData) {
 	data.Summary.TopPaths = r.getTopItems(pathCounts, 10)
 
 	// Top IPs
-	data.Summary.TopIPs = r.getTopItems(ipCounts, 10)
+	data.Summary.TopIPs = r.getTopIPs(ipCounts, 10)
 
 	// Status code breakdown
 	statusCounts := make(map[string]int64)
@@ -246,6 +245,41 @@ func (r *Reporter) getTopItems(counts map[string]int64, n int) []PathSummary {
 	for item, count := range counts {
 		items = append(items, PathSummary{
 			Path:  item,
+			Count: count,
+		})
+	}
+
+	// Sort by count (descending)
+	sort.Slice(items, func(i, j int) bool {
+		return items[i].Count > items[j].Count
+	})
+
+	// Limit to top N
+	if len(items) > n {
+		items = items[:n]
+	}
+
+	// Calculate percentages
+	var total int64
+	for _, item := range items {
+		total += item.Count
+	}
+
+	for i := range items {
+		if total > 0 {
+			items[i].Percentage = float64(items[i].Count) / float64(total) * 100
+		}
+	}
+
+	return items
+}
+
+// getTopIPs returns top N IPs by count
+func (r *Reporter) getTopIPs(counts map[string]int64, n int) []IPSummary {
+	var items []IPSummary
+	for item, count := range counts {
+		items = append(items, IPSummary{
+			IP:    item,
 			Count: count,
 		})
 	}

@@ -187,7 +187,7 @@
                 <tbody>
                     {{range .Summary.TopPaths}}
                     <tr>
-                        <td title="{{.Path}}">{{if gt (len .Path) 40}}{{slice .Path 0 40}}...{{else}}{{.Path}}{{end}}</td>
+                        <td title="{{.Path}}">{{if gt (len .Path) 40}}{{printf "%.40s" .Path}}...{{else}}{{.Path}}{{end}}</td>
                         <td>{{.Count}}</td>
                         <td>{{printf "%.1f" .Percentage}}%</td>
                         <td style="width: 100px;">

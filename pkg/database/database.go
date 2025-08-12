@@ -3,11 +3,9 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/ShashankBejjanki1241/Go-Based-Server-Log-Analyzer-Reporting-Platform/pkg/config"
-	"github.com/ShashankBejjanki1241/Go-Based-Server-Log-Analyzer-Reporting-Platform/pkg/models"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 )

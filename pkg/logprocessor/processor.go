@@ -266,7 +266,7 @@ func (p *Processor) parseGenericLog(line string) (*models.LogEntry, error) {
 		timestamp = time.Now()
 	}
 
-	level := parts[2]
+	_ = parts[2] // level
 	message := strings.Join(parts[3:], " ")
 
 	// Extract key-value pairs from message
@@ -293,7 +293,7 @@ func (p *Processor) splitApacheLog(line string) []string {
 	inQuotes := false
 	escapeNext := false
 
-	for i, char := range line {
+	for _, char := range line {
 		if escapeNext {
 			current.WriteRune(char)
 			escapeNext = false

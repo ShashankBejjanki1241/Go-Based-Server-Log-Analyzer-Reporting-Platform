@@ -356,7 +356,7 @@
                             <td>{{.LogType}}</td>
                             <td>{{.SourceIP}}</td>
                             <td>{{.Method}}</td>
-                            <td title="{{.Path}}">{{if gt (len .Path) 50}}{{slice .Path 0 50}}...{{else}}{{.Path}}{{end}}</td>
+                            <td title="{{.Path}}">{{if gt (len .Path) 50}}{{printf "%.50s" .Path}}...{{else}}{{.Path}}{{end}}</td>
                             <td>
                                 <span class="status-code status-{{if ge .StatusCode 200}}{{if lt .StatusCode 300}}2xx{{else if lt .StatusCode 400}}3xx{{else if lt .StatusCode 500}}4xx{{else}}5xx{{end}}{{else}}5xx{{end}}">
                                     {{.StatusCode}}

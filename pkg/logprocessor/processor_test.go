@@ -74,7 +74,7 @@ func TestParseGenericLog(t *testing.T) {
 	assert.Equal(t, line, entry.RawLog)
 	assert.Contains(t, entry.Metadata, "user_id")
 	assert.Contains(t, entry.Metadata, "ip")
-	assert.Equal(t, float64(12345), entry.Metadata["user_id"])
+	assert.Equal(t, 12345, entry.Metadata["user_id"])
 	assert.Equal(t, "192.168.1.102", entry.Metadata["ip"])
 }
 
@@ -150,11 +150,11 @@ func TestExtractKeyValuePairs(t *testing.T) {
 	assert.Contains(t, metadata, "error")
 	assert.Contains(t, metadata, "count")
 	
-	assert.Equal(t, float64(12345), metadata["user_id"])
+	assert.Equal(t, 12345, metadata["user_id"])
 	assert.Equal(t, "192.168.1.100", metadata["ip"])
 	assert.Equal(t, "active", metadata["status"])
 	assert.Equal(t, false, metadata["error"])
-	assert.Equal(t, float64(42), metadata["count"])
+	assert.Equal(t, 42, metadata["count"])
 }
 
 func TestGetStats(t *testing.T) {

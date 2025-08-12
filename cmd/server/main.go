@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"os/signal"
@@ -463,7 +463,7 @@ func (s *Server) getDatabaseStatsHandler(w http.ResponseWriter, r *http.Request)
 }
 
 // Helper methods
-func (s *Server) processLogFile(file *os.File, logType string) error {
+func (s *Server) processLogFile(file multipart.File, logType string) error {
 	// Reset file pointer
 	if _, err := file.Seek(0, 0); err != nil {
 		return fmt.Errorf("failed to seek file: %w", err)
@@ -544,9 +544,10 @@ func (s *Server) generateDailyReport() error {
 	}
 
 	// Get logs for yesterday
+	now := time.Now()
 	logs, err := s.getLogsForReport(&models.LogFilter{
 		StartTime: &yesterday,
-		EndTime:   &time.Now(),
+		EndTime:   &now,
 	})
 	if err != nil {
 		return err
