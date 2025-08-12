@@ -294,7 +294,7 @@
             labels: {{range .Summary.HourlyTraffic}}'{{.Hour}}:00',{{end}},
             datasets: [{
                 label: 'Requests per Hour',
-                data: {{range .Summary.HourlyTraffic}}{{$value}},{{end}},
+                data: {{range .Summary.HourlyTraffic}}{{.Count}},{{end}},
                 backgroundColor: 'rgba(102, 126, 234, 0.2)',
                 borderColor: 'rgba(102, 126, 234, 1)',
                 borderWidth: 2,

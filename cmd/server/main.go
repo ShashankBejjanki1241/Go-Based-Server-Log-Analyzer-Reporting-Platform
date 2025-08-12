@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"mime/multipart"
@@ -79,6 +80,9 @@ func NewServer(cfg *config.Config) (*Server, error) {
 }
 
 func (s *Server) setupRoutes() {
+	// Root route - Web interface
+	s.router.HandleFunc("/", s.indexHandler).Methods("GET")
+	
 	// Health check
 	s.router.HandleFunc("/health", s.healthHandler).Methods("GET")
 	
@@ -153,6 +157,154 @@ func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(health)
+}
+
+func (s *Server) indexHandler(w http.ResponseWriter, r *http.Request) {
+	// Set content type to HTML
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	
+	// Simple HTML dashboard
+	html := `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Go-Based Server Log Analyzer & Reporting Platform</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; text-align: center; margin-bottom: 30px; }
+        .section { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .section h2 { color: #555; margin-top: 0; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { background: #007bff; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #0056b3; }
+        .api-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+        .api-link { padding: 15px; border: 1px solid #ddd; border-radius: 5px; text-decoration: none; color: #333; background: #f8f9fa; }
+        .api-link:hover { background: #e9ecef; }
+        .status { padding: 10px; border-radius: 4px; margin-bottom: 20px; }
+        .status.healthy { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status.unhealthy { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Go-Based Server Log Analyzer & Reporting Platform</h1>
+        
+        <div id="status" class="status">Checking server status...</div>
+        
+        <div class="section">
+            <h2>📊 Log Upload</h2>
+            <form id="uploadForm">
+                <div class="form-group">
+                    <label for="logfile">Select Log File:</label>
+                    <input type="file" id="logfile" name="logfile" accept=".log,.txt" required>
+                </div>
+                <div class="form-group">
+                    <label for="logType">Log Type:</label>
+                    <select id="logType" name="logType">
+                        <option value="apache">Apache</option>
+                        <option value="nginx">Nginx</option>
+                        <option value="generic">Generic</option>
+                    </select>
+                </div>
+                <button type="submit">Upload & Process Log</button>
+            </form>
+        </div>
+        
+        <div class="section">
+            <h2>🔍 API Endpoints</h2>
+            <div class="api-links">
+                <a href="/api/v1/logs" class="api-link">
+                    <strong>📋 View Logs</strong><br>
+                    GET /api/v1/logs
+                </a>
+                <a href="/api/v1/logs/stats" class="api-link">
+                    <strong>📈 Log Statistics</strong><br>
+                    GET /api/v1/logs/stats
+                </a>
+                <a href="/api/v1/reports" class="api-link">
+                    <strong>📊 Reports</strong><br>
+                    GET /api/v1/reports
+                </a>
+                <a href="/api/v1/stats" class="api-link">
+                    <strong>🗄️ Database Stats</strong><br>
+                    GET /api/v1/stats
+                </a>
+                <a href="/health" class="api-link">
+                    <strong>💚 Health Check</strong><br>
+                    GET /health
+                </a>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 Usage Instructions</h2>
+            <ol>
+                <li><strong>Upload Logs:</strong> Use the form above to upload and process log files</li>
+                <li><strong>View Data:</strong> Click on the API endpoints above to explore your data</li>
+                <li><strong>Generate Reports:</strong> Use POST /api/v1/reports/generate to create reports</li>
+                <li><strong>Monitor Health:</strong> Check /health for system status</li>
+            </ol>
+        </div>
+    </div>
+    
+    <script>
+        // Check server health on page load
+        fetch('/health')
+            .then(response => response.json())
+            .then(data => {
+                const statusDiv = document.getElementById('status');
+                if (data.status === 'healthy') {
+                    statusDiv.className = 'status healthy';
+                    statusDiv.innerHTML = '✅ Server Status: <strong>Healthy</strong> - Database connection successful';
+                } else {
+                    statusDiv.className = 'status unhealthy';
+                    statusDiv.innerHTML = '❌ Server Status: <strong>Unhealthy</strong> - ' + (data.database_error || 'Unknown error');
+                }
+            })
+            .catch(error => {
+                const statusDiv = document.getElementById('status');
+                statusDiv.className = 'status unhealthy';
+                statusDiv.innerHTML = '❌ Server Status: <strong>Unreachable</strong> - Cannot connect to server';
+            });
+        
+        // Handle file upload
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const fileInput = document.getElementById('logfile');
+            const logType = document.getElementById('logType').value;
+            
+            if (fileInput.files.length === 0) {
+                alert('Please select a file');
+                return;
+            }
+            
+            formData.append('logfile', fileInput.files[0]);
+            formData.append('log_type', logType);
+            
+            fetch('/api/v1/logs/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Log uploaded successfully! ' + data.message);
+                fileInput.value = '';
+            })
+            .catch(error => {
+                alert('Error uploading log: ' + error.message);
+            });
+        });
+    </script>
+</body>
+</html>`
+	
+	w.Write([]byte(html))
 }
 
 func (s *Server) uploadLogHandler(w http.ResponseWriter, r *http.Request) {
@@ -712,8 +864,12 @@ func (s *Server) Start() error {
 }
 
 func main() {
+	// Parse command line flags
+	configFile := flag.String("config", "config.yaml", "Path to configuration file")
+	flag.Parse()
+
 	// Load configuration
-	cfg, err := config.LoadConfig("config.yaml")
+	cfg, err := config.LoadConfig(*configFile)
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
